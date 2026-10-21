@@ -1,0 +1,197 @@
+{% extends "base.twig" %}
+
+{% block titulo %}Reserva #{{ reserva.id }} - {{ reserva.nombre_huesped }} | MisterStay{% endblock %}
+
+{% block contenido %}
+<div class="page-header detalle-header">
+    <div class="page-header-nav">
+        <a href="reservas.php" class="btn-volver">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Volver al listado</span>
+        </a>
+    </div>
+
+    <div class="page-header-main">
+        <div class="detalle-titulo-wrapper">
+            <h2 class="page-title">Reserva #{{ reserva.id }}</h2>
+            <span class="badge badge-lg badge-{{ reserva.estado }}" id="detalle-badge-estado">
+                {{ reserva.estado|capitalize }}
+            </span>
+        </div>
+        <div class="detalle-acciones" id="acciones-reserva-{{ reserva.id }}">
+            {% if reserva.estado == 'pendiente' %}
+                <button
+                    type="button"
+                    class="btn btn-confirm btn-cambiar-estado"
+                    data-id="{{ reserva.id }}"
+                    data-nuevo-estado="confirmada"
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Confirmar Reserva</span>
+                </button>
+            {% endif %}
+
+            {% if reserva.estado != 'cancelada' %}
+                <button
+                    type="button"
+                    class="btn btn-danger btn-abrir-cancelar"
+                    data-id="{{ reserva.id }}"
+                    data-huesped="{{ reserva.nombre_huesped }}"
+                >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    <span>Cancelar Reserva</span>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="detalle-grid">
+    <!-- Columna Izquierda: Información Principal -->
+    <div class="detalle-col-info">
+        <!-- Tarjeta: Datos del Huésped -->
+        <section class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Datos del Huésped</h3>
+            </div>
+            <div class="info-list">
+                <div class="info-item">
+                    <span class="info-label">Nombre completo</span>
+                    <span class="info-value font-semibold">{{ reserva.nombre_huesped }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Correo electrónico</span>
+                    <span class="info-value">
+                        <a href="mailto:{{ reserva.email_huesped }}" class="link-email">
+                            {{ reserva.email_huesped }}
+                        </a>
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tarjeta: Datos de la Estancia -->
+        <section class="card mb-4">
+            <div class="card-header">
+                <h3 class="card-title">Detalles del Alojamiento</h3>
+            </div>
+            <div class="info-list">
+                <div class="info-item">
+                    <span class="info-label">Alojamiento</span>
+                    <span class="info-value font-semibold">{{ reserva.nombre_alojamiento }}</span>
+                </div>
+                <div class="info-grid-2">
+                    <div class="info-item">
+                        <span class="info-label">Fecha de Entrada</span>
+                        <span class="info-value highlight-date">{{ reserva.fecha_entrada|date('d/m/Y') }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Fecha de Salida</span>
+                        <span class="info-value highlight-date">{{ reserva.fecha_salida|date('d/m/Y') }}</span>
+                    </div>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Importe Total</span>
+                    <span class="info-value importe-total font-bold">
+                        {{ reserva.importe|number_format(2, ',', '.') }} €
+                    </span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Fecha de Registro</span>
+                    <span class="info-value text-muted">
+                        {{ reserva.fecha_creacion|date('d/m/Y H:i') }}
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tarjeta: Notas y Peticiones -->
+        <section class="card">
+            <div class="card-header">
+                <h3 class="card-title">Notas y Peticiones Especiales</h3>
+            </div>
+            <div class="notas-box">
+                {% if reserva.notas %}
+                    <p class="notas-texto">{{ reserva.notas|nl2br }}</p>
+                {% else %}
+                    <p class="text-muted fst-italic">Sin observaciones o notas especiales registradas.</p>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+
+    <!-- Columna Derecha: Timeline / Historial de Eventos -->
+    <div class="detalle-col-timeline">
+        <section class="card">
+            <div class="card-header">
+                <div class="card-header-left">
+                    <h3 class="card-title">Historial de Eventos</h3>
+                    <span class="badge-count">{{ reserva.eventos|length }} eventos</span>
+                </div>
+            </div>
+
+            <div class="timeline" id="reserva-timeline">
+                {% for evento in reserva.eventos %}
+                    <div class="timeline-item timeline-{{ evento.tipo }}">
+                        <div class="timeline-marker">
+                            {% if evento.tipo == 'creacion' %}
+                                <span class="marker-dot dot-creacion"></span>
+                            {% elseif evento.tipo == 'cambio_estado' %}
+                                <span class="marker-dot dot-estado"></span>
+                            {% else %}
+                                <span class="marker-dot dot-general"></span>
+                            {% endif %}
+                        </div>
+                        <div class="timeline-content">
+                            <div class="timeline-header">
+                                <span class="timeline-tipo badge badge-sm badge-outline">
+                                    {{ evento.tipo|replace({'_': ' '})|capitalize }}
+                                </span>
+                                <time class="timeline-fecha text-muted">
+                                    {{ evento.fecha_creacion|date('d/m/Y H:i:s') }}
+                                </time>
+                            </div>
+                            <p class="timeline-descripcion">{{ evento.descripcion }}</p>
+                        </div>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-4">No hay eventos registrados para esta reserva.</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</div>
+
+<!-- Modal: Confirmar Cancelación (Reutilizable en Detalle) -->
+<div id="modal-confirmar-cancelar" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-cancelar-titulo">
+    <div class="modal-dialog modal-dialog-sm">
+        <div class="modal-header">
+            <h3 id="modal-cancelar-titulo" class="modal-title text-danger">Confirmar Cancelación</h3>
+            <button type="button" class="modal-close" id="btn-cerrar-modal-cancelar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>¿Estás seguro de que deseas cancelar la reserva <strong id="cancelar-reserva-id">#{{ reserva.id }}</strong>?</p>
+            <p class="text-muted text-sm">Esta acción cambiará el estado a <em>Cancelada</em> y registrará el evento en el historial. Las reservas canceladas no pueden ser reactivadas.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-abortar-cancelacion">No, volver</button>
+            <button type="button" class="btn btn-danger" id="btn-ejecutar-cancelacion" data-redirect-on-cancel="false">
+                <span class="btn-text">Sí, cancelar reserva</span>
+                <span class="btn-spinner hidden">Cancelando...</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="js/reservas.js"></script>
+{% endblock %}
