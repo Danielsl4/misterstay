@@ -8,9 +8,26 @@ Prueba técnica para desarrollador/a PHP — MisterPlan.
 
 ## 🚀 Despliegue en Producción
 
-- **URL de la aplicación en vivo**: `[Inserta aquí la URL de tu despliegue, ej. https://misterstay.tu-hosting.com]`
+- **URL de la aplicación en vivo**: [https://misterstay.onrender.com/](https://misterstay.onrender.com/)
 
----
+### Cómo se ha desplegado (Arquitectura en Render con Docker)
+
+Para garantizar un entorno reproducible, fiable y que no dependa de configuraciones manuales en servidores compartidos, la aplicación se ha **containerizado con Docker** y desplegado en **Render** como un *Web Service*:
+
+1. **Contenedor autosuficiente (All-in-One)**:
+   - Se utiliza como base la imagen oficial `php:8.2-apache`.
+   - Se compilan las extensiones nativas necesarias (`pdo`, `pdo_mysql`, `zip`) y se habilita el módulo `mod_rewrite` de Apache.
+   - El contenedor integra su propio servidor **MariaDB optimizado para bajo consumo de memoria** (`performance_schema = off`, `innodb_buffer_pool_size = 32M`), consumiendo menos de 50 MB de RAM y funcionando con total estabilidad dentro de los límites del plan gratuito de Render.
+
+2. **Automatización de inicio y sembrado (`entrypoint.sh`)**:
+   - Al arrancar el contenedor, el script de entrada `entrypoint.sh` inicia el servicio de MariaDB.
+   - Crea automáticamente la base de datos `misterstay` y el usuario seguro de la aplicación.
+   - Importa de forma idempotente el archivo `database/reservas.sql` sembrando las tablas, claves foráneas, restricciones y las reservas de prueba iniciales.
+   - Inicia Apache en primer plano apuntando el `DocumentRoot` a `/public`.
+
+3. **Integración y Despliegue Continuo (CI/CD)**:
+   - Render está enlazado directamente con el repositorio de GitHub (`Danielsl4/misterstay`).
+   - Cada `git push` a la rama `main` dispara automáticamente la compilación de la imagen Docker y el despliegue de la nueva versión sin tiempo de inactividad (*zero-downtime*).
 
 ## 🛠️ Tecnologías y Requisitos
 
@@ -26,7 +43,7 @@ Prueba técnica para desarrollador/a PHP — MisterPlan.
 
 ### 1. Clonar el repositorio
 ```bash
-git clone https://github.com/tu-usuario/misterstay.git
+git clone https://github.com/Danielsl4/misterstay
 cd misterstay
 ```
 
