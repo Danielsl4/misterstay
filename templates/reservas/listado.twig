@@ -1,0 +1,320 @@
+{% extends "base.twig" %}
+
+{% block titulo %}Gestión de Reservas | MisterStay{% endblock %}
+
+{% block contenido %}
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Panel de Reservas</h2>
+        <p class="page-description">Consulta, filtra y gestiona todas las reservas de alojamiento en tiempo real.</p>
+    </div>
+</div>
+
+<!-- Tarjetas de métricas rápidas -->
+<section class="stats-grid" aria-label="Resumen de reservas">
+    <div class="stat-card">
+        <span class="stat-label">Total Reservas</span>
+        <span class="stat-value" id="stat-total">{{ reservas|length }}</span>
+    </div>
+    <div class="stat-card stat-confirmada">
+        <span class="stat-label">Confirmadas</span>
+        <span class="stat-value" id="stat-confirmadas">
+            {{ reservas|filter(r => r.estado == 'confirmada')|length }}
+        </span>
+    </div>
+    <div class="stat-card stat-pendiente">
+        <span class="stat-label">Pendientes</span>
+        <span class="stat-value" id="stat-pendientes">
+            {{ reservas|filter(r => r.estado == 'pendiente')|length }}
+        </span>
+    </div>
+    <div class="stat-card stat-cancelada">
+        <span class="stat-label">Canceladas</span>
+        <span class="stat-value" id="stat-canceladas">
+            {{ reservas|filter(r => r.estado == 'cancelada')|length }}
+        </span>
+    </div>
+</section>
+
+<!-- Panel de Filtros -->
+<section class="card filtros-card" aria-label="Filtros de búsqueda">
+    <form id="form-filtros" class="filtros-form">
+        <div class="form-group">
+            <label for="filtro-estado">Estado</label>
+            <select id="filtro-estado" name="estado" class="form-control">
+                <option value="">Todos los estados</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="confirmada">Confirmada</option>
+                <option value="cancelada">Cancelada</option>
+            </select>
+        </div>
+
+        <div class="form-group form-group-grow">
+            <label for="filtro-huesped">Nombre del Huésped</label>
+            <div class="input-icon-wrapper">
+                <input
+                    type="text"
+                    id="filtro-huesped"
+                    name="huesped"
+                    class="form-control"
+                    placeholder="Buscar por nombre o apellidos..."
+                    autocomplete="off"
+                >
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="filtro-fecha-desde">Entrada desde</label>
+            <input type="date" id="filtro-fecha-desde" name="fecha_desde" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label for="filtro-fecha-hasta">Entrada hasta</label>
+            <input type="date" id="filtro-fecha-hasta" name="fecha_hasta" class="form-control">
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="btn-filtrar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <span>Filtrar</span>
+            </button>
+            <button type="button" class="btn btn-secondary" id="btn-limpiar-filtros">
+                <span>Limpiar</span>
+            </button>
+        </div>
+    </form>
+</section>
+
+<!-- Tabla de Reservas -->
+<section class="card tabla-card">
+    <div class="card-header">
+        <div class="card-header-left">
+            <h3 class="card-title">Listado de Reservas</h3>
+            <span class="badge-count" id="contador-reservas">{{ reservas|length }} resultados</span>
+        </div>
+        <div id="loading-spinner" class="loading-spinner hidden" aria-live="polite">
+            <div class="spinner"></div>
+            <span>Actualizando datos...</span>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="data-table" id="tabla-reservas">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 70px;">ID</th>
+                    <th scope="col">Huésped</th>
+                    <th scope="col">Alojamiento</th>
+                    <th scope="col">Entrada</th>
+                    <th scope="col">Salida</th>
+                    <th scope="col" class="text-right">Importe</th>
+                    <th scope="col" class="text-center">Estado</th>
+                    <th scope="col" class="text-right" style="min-width: 220px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tbody-reservas">
+                {% for reserva in reservas %}
+                    <tr id="fila-reserva-{{ reserva.id }}" data-id="{{ reserva.id }}" data-estado="{{ reserva.estado }}">
+                        <td class="reserva-id">#{{ reserva.id }}</td>
+                        <td>
+                            <div class="huesped-info">
+                                <span class="huesped-nombre">{{ reserva.nombre_huesped }}</span>
+                                <span class="huesped-email">{{ reserva.email_huesped }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="alojamiento-nombre">{{ reserva.nombre_alojamiento }}</span>
+                        </td>
+                        <td>{{ reserva.fecha_entrada|date('d/m/Y') }}</td>
+                        <td>{{ reserva.fecha_salida|date('d/m/Y') }}</td>
+                        <td class="text-right importe-celda">
+                            <strong>{{ reserva.importe|number_format(2, ',', '.') }} €</strong>
+                        </td>
+                        <td class="text-center">
+                            <span class="badge badge-{{ reserva.estado }}">
+                                {{ reserva.estado|capitalize }}
+                            </span>
+                        </td>
+                        <td class="text-right acciones-celda">
+                            <a href="reservas.php?id={{ reserva.id }}" class="btn-action btn-view" title="Ver detalle y timeline">
+                                Ver
+                            </a>
+
+                            {% if reserva.estado == 'pendiente' %}
+                                <button type="button" class="btn-action btn-confirm btn-cambiar-estado" data-id="{{ reserva.id }}" data-nuevo-estado="confirmada" title="Confirmar reserva">
+                                    Confirmar
+                                </button>
+                            {% endif %}
+
+                            {% if reserva.estado != 'cancelada' %}
+                                <button type="button" class="btn-action btn-cancel btn-abrir-cancelar" data-id="{{ reserva.id }}" data-huesped="{{ reserva.nombre_huesped }}" title="Cancelar reserva">
+                                    Cancelar
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr id="fila-sin-resultados">
+                        <td colspan="8" class="empty-state">
+                            <div class="empty-state-content">
+                                <p class="empty-title">No hay reservas registradas</p>
+                                <p class="empty-subtitle">No se encontraron reservas con los filtros aplicados o la base de datos está vacía.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Modal: Crear Nueva Reserva -->
+<div id="modal-nueva-reserva" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-titulo">
+    <div class="modal-dialog">
+        <div class="modal-header">
+            <h3 id="modal-titulo" class="modal-title">Registrar Nueva Reserva</h3>
+            <button type="button" class="modal-close" id="btn-cerrar-modal" aria-label="Cerrar modal">&times;</button>
+        </div>
+
+        <form id="form-nueva-reserva" novalidate>
+            <div class="modal-body">
+                <!-- Contenedor de errores del servidor / validación -->
+                <div id="modal-alerta-error" class="alerta alerta-error hidden" role="alert"></div>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="modal-nombre-huesped" class="required">Nombre del Huésped</label>
+                        <input
+                            type="text"
+                            id="modal-nombre-huesped"
+                            name="nombre_huesped"
+                            class="form-control"
+                            maxlength="120"
+                            placeholder="Ej. Carmen Navarro Ruiz"
+                            required
+                        >
+                        <span class="field-error" id="error-nombre_huesped"></span>
+                    </div>
+
+                    <div class="form-group flex-1">
+                        <label for="modal-email-huesped" class="required">Email de Contacto</label>
+                        <input
+                            type="email"
+                            id="modal-email-huesped"
+                            name="email_huesped"
+                            class="form-control"
+                            maxlength="254"
+                            placeholder="carmen@example.com"
+                            required
+                        >
+                        <span class="field-error" id="error-email_huesped"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-alojamiento" class="required">Nombre del Alojamiento</label>
+                    <input
+                        type="text"
+                        id="modal-alojamiento"
+                        name="nombre_alojamiento"
+                        class="form-control"
+                        maxlength="150"
+                        placeholder="Ej. Hotel Gran Vía Suites, Apartamento 3B"
+                        required
+                    >
+                    <span class="field-error" id="error-nombre_alojamiento"></span>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="modal-fecha-entrada" class="required">Fecha de Entrada</label>
+                        <input
+                            type="date"
+                            id="modal-fecha-entrada"
+                            name="fecha_entrada"
+                            class="form-control"
+                            required
+                        >
+                        <span class="field-error" id="error-fecha_entrada"></span>
+                    </div>
+
+                    <div class="form-group flex-1">
+                        <label for="modal-fecha-salida" class="required">Fecha de Salida</label>
+                        <input
+                            type="date"
+                            id="modal-fecha-salida"
+                            name="fecha_salida"
+                            class="form-control"
+                            required
+                        >
+                        <span class="field-error" id="error-fecha_salida"></span>
+                    </div>
+
+                    <div class="form-group flex-1">
+                        <label for="modal-importe" class="required">Importe (€)</label>
+                        <input
+                            type="number"
+                            id="modal-importe"
+                            name="importe"
+                            class="form-control"
+                            step="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            required
+                        >
+                        <span class="field-error" id="error-importe"></span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="modal-notas">Notas adicionales / Peticiones especiales</label>
+                    <textarea
+                        id="modal-notas"
+                        name="notas"
+                        class="form-control"
+                        rows="3"
+                        maxlength="5000"
+                        placeholder="Observaciones de la reserva, régimen de comidas, cuna, etc."
+                    ></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="btn-cancelar-modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="btn-guardar-reserva">
+                    <span class="btn-text">Crear Reserva</span>
+                    <span class="btn-spinner hidden">Guardando...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal: Confirmar Cancelación -->
+<div id="modal-confirmar-cancelar" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-cancelar-titulo">
+    <div class="modal-dialog modal-dialog-sm">
+        <div class="modal-header">
+            <h3 id="modal-cancelar-titulo" class="modal-title text-danger">Confirmar Cancelación</h3>
+            <button type="button" class="modal-close" id="btn-cerrar-modal-cancelar">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>¿Estás seguro de que deseas cancelar la reserva <strong id="cancelar-reserva-id">#</strong> correspondiente a <strong id="cancelar-reserva-huesped"></strong>?</p>
+            <p class="text-muted text-sm">Esta acción cambiará el estado a <em>Cancelada</em> y registrará el evento en el historial. Las reservas canceladas no pueden ser reactivadas.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-abortar-cancelacion">No, volver</button>
+            <button type="button" class="btn btn-danger" id="btn-ejecutar-cancelacion">
+                <span class="btn-text">Sí, cancelar reserva</span>
+                <span class="btn-spinner hidden">Cancelando...</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="js/reservas.js"></script>
+{% endblock %}

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block titulo %}MisterStay - Gestión de Reservas{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/estilos.css">
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+    <header class="app-header">
+        <div class="contenedor header-contenido">
+            <div class="brand">
+                <a href="reservas.php" class="brand-link">
+                    <div class="brand-icon">MS</div>
+                    <div>
+                        <h1 class="brand-title">MisterStay</h1>
+                        <span class="brand-subtitle">Gestión hotelera & alojamientos turísticos</span>
+                    </div>
+                </a>
+            </div>
+            <nav class="nav-links">
+                <a href="reservas.php" class="nav-link active">Reservas</a>
+                <button type="button" class="btn btn-primary" id="btn-abrir-nueva-reserva">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Nueva Reserva</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Contenedor global de notificaciones toast -->
+    <div id="toast-container" class="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <main class="contenedor principal">
+        {% block contenido %}{% endblock %}
+    </main>
+
+    <footer class="app-footer">
+        <div class="contenedor footer-contenido">
+            <p>MisterStay &bull; Prueba Técnica Desarrollador/a Junior PHP &bull; Sin Frameworks</p>
+            <p class="muted">PHP 8.2 &bull; MySQL &bull; Twig &bull; Vanilla JavaScript</p>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
