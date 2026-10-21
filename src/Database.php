@@ -5,12 +5,13 @@ class Database
 {
   public static function connect(): PDO
   {
-    $host = '127.0.0.1';
-    $database = 'misterstay';
-    $username = 'root';
-    $password = '';
+    $host = getenv('DB_HOST') ?: '127.0.0.1';
+    $port = getenv('DB_PORT') ?: '3306';
+    $database = getenv('DB_NAME') ?: 'misterstay';
+    $username = getenv('DB_USER') ?: 'root';
+    $password = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '';
 
-    $dsn = "mysql:host=$host;dbname=$database;charset=utf8mb4";
+    $dsn = "mysql:host=$host;port=$port;dbname=$database;charset=utf8mb4";
 
     return new PDO($dsn, $username, $password, [
       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

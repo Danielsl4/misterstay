@@ -1,0 +1,5 @@
+.git
+.gitignore
+.phpunit.result.cache
+tests/
+test-db.php
