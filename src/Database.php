@@ -8,11 +8,16 @@ class Database
     $host = getenv('DB_HOST') ?: '127.0.0.1';
     $port = getenv('DB_PORT') ?: '3306';
     $database = getenv('DB_NAME') ?: 'misterstay';
-    $username = getenv('DB_USER') ?: 'root';
-    $password = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '';
 
-    // En Linux (contenedor Docker), si existe el socket local, conectamos directamente por socket
-    if (($host === '127.0.0.1' || $host === 'localhost') && file_exists('/var/run/mysqld/mysqld.sock')) {
+    // En Linux (contenedor Docker), usar el usuario 'misterstay'; en Windows (XAMPP), 'root'
+    $isDocker = file_exists('/var/run/mysqld/mysqld.sock');
+    $defaultUser = $isDocker ? 'misterstay' : 'root';
+    $defaultPass = $isDocker ? 'misterstay123' : '';
+
+    $username = getenv('DB_USER') ?: $defaultUser;
+    $password = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : $defaultPass;
+
+    if (($host === '127.0.0.1' || $host === 'localhost') && $isDocker) {
       $dsn = "mysql:unix_socket=/var/run/mysqld/mysqld.sock;dbname=$database;charset=utf8mb4";
     } else {
       $dsn = "mysql:host=$host;port=$port;dbname=$database;charset=utf8mb4";
@@ -24,7 +29,6 @@ class Database
       PDO::ATTR_EMULATE_PREPARES => false,
     ];
 
-    // En hosts remotos (cloud) activamos SSL sin validación estricta de certificado local
     if ($host !== '127.0.0.1' && $host !== 'localhost') {
       $opciones[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
     }

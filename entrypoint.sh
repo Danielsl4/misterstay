@@ -17,13 +17,13 @@ for i in {1..30}; do
     sleep 1
 done
 
-# Configurar usuarios y permisos para permitir conexión tanto por socket como por TCP
+# Crear la base de datos y un usuario específico con contraseña para la app
 mariadb -u root <<EOF
 CREATE DATABASE IF NOT EXISTS misterstay CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER IF NOT EXISTS 'root'@'127.0.0.1' IDENTIFIED BY '';
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'127.0.0.1' WITH GRANT OPTION;
-CREATE USER IF NOT EXISTS 'root'@'localhost' IDENTIFIED BY '';
-GRANT ALL PRIVILEGES ON *.* TO 'root'@'localhost' WITH GRANT OPTION;
+CREATE USER IF NOT EXISTS 'misterstay'@'localhost' IDENTIFIED BY 'misterstay123';
+CREATE USER IF NOT EXISTS 'misterstay'@'127.0.0.1' IDENTIFIED BY 'misterstay123';
+GRANT ALL PRIVILEGES ON misterstay.* TO 'misterstay'@'localhost';
+GRANT ALL PRIVILEGES ON misterstay.* TO 'misterstay'@'127.0.0.1';
 FLUSH PRIVILEGES;
 EOF
 
