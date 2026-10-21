@@ -13,10 +13,17 @@ class Database
 
     $dsn = "mysql:host=$host;port=$port;dbname=$database;charset=utf8mb4";
 
-    return new PDO($dsn, $username, $password, [
+    $opciones = [
       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
       PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
       PDO::ATTR_EMULATE_PREPARES => false,
-    ]);
+    ];
+
+    // En hosts remotos (cloud) activamos SSL sin validación estricta de certificado local
+    if ($host !== '127.0.0.1' && $host !== 'localhost') {
+      $opciones[PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT] = false;
+    }
+
+    return new PDO($dsn, $username, $password, $opciones);
   }
 }

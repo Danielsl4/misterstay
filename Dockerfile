@@ -1,10 +1,15 @@
 FROM php:8.2-apache
 
+# Instalar dependencias del sistema requeridas por Composer (git, unzip, libzip) y extensiones PHP
+RUN apt-get update && apt-get install -y \
+    git \
+    unzip \
+    libzip-dev \
+    && docker-php-ext-install zip pdo pdo_mysql \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 # Habilitar mod_rewrite de Apache para soportar .htaccess y rutas limpias de la API
 RUN a2enmod rewrite
-
-# Instalar extensiones necesarias de PHP para MySQL y UTF-8
-RUN docker-php-ext-install pdo pdo_mysql
 
 # Configurar el DocumentRoot de Apache para que apunte a /public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
