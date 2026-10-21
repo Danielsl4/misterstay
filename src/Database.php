@@ -11,7 +11,12 @@ class Database
     $username = getenv('DB_USER') ?: 'root';
     $password = getenv('DB_PASSWORD') !== false ? getenv('DB_PASSWORD') : '';
 
-    $dsn = "mysql:host=$host;port=$port;dbname=$database;charset=utf8mb4";
+    // En Linux (contenedor Docker), si existe el socket local, conectamos directamente por socket
+    if (($host === '127.0.0.1' || $host === 'localhost') && file_exists('/var/run/mysqld/mysqld.sock')) {
+      $dsn = "mysql:unix_socket=/var/run/mysqld/mysqld.sock;dbname=$database;charset=utf8mb4";
+    } else {
+      $dsn = "mysql:host=$host;port=$port;dbname=$database;charset=utf8mb4";
+    }
 
     $opciones = [
       PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,

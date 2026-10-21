@@ -60,8 +60,8 @@ try {
 
     echo $twig->render('error.twig', [
         'codigo' => 500,
-        'titulo' => 'Error interno',
-        'mensaje' => 'Se ha producido un error al cargar la información. Por favor, inténtalo más tarde.'
+        'titulo' => 'Error de conexión / Sistema',
+        'mensaje' => $e->getMessage()
     ]);
 }
 
